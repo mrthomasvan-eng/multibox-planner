@@ -71,12 +71,21 @@ _asset = _load_assets(_assets)
 _bg_tile_b64 = _asset["bg_tile"]
 _sidebar_b64 = _asset["sidebar"]
 _header_b64 = _asset["header"]
-_class_icons_b64 = _asset["class_icons"]
+_class_icons_b64 = _asset.get("class_icons", {})
+
 
 def _class_icon_key(name: str) -> str:
     return "shadow_knight" if name == "Shadowknight" else name.lower().replace(" ", "_")
 
+
+def _build_line(comp, medal_or_rank_html: str) -> str:
+    """Build recommendation card line: medal/rank + class names (no icons)."""
+    names = " · ".join(f'<span class="rec-class-name">{cls}</span>' for cls in comp)
+    return medal_or_rank_html + '<span class="rec-label">' + names + "</span>"
+
+
 def _build_line_with_icons(comp, medal_or_rank_html: str) -> str:
+    """Build line with small class icons (for top result only)."""
     parts = []
     for cls in comp:
         key = _class_icon_key(cls)
@@ -272,6 +281,45 @@ def _load_app_data(_data_dir: Path):
 
 
 ratings, defaults, rulesets, meta_builds_data = _load_app_data(DATA_DIR)
+
+
+@st.cache_data(show_spinner=False)
+def _cached_recommendations(
+    _data_dir_str: str,
+    era: str,
+    available_tuple: tuple,
+    template_slots_tuple: tuple,
+    boxing_mode: str,
+    start: str,
+    must_tuple: tuple,
+    exclude_tuple: tuple,
+    require_ports: bool,
+    require_run_speed: bool,
+    require_charm: bool,
+    require_pet_heavy: bool,
+    hardcore_required: bool,
+):
+    """Cache recommendation results so same selections return instantly."""
+    ratings_in, _, _, _ = _load_app_data(Path(_data_dir_str))
+    return generate_scored_recommendations(
+        ratings=ratings_in,
+        era=era,
+        available=list(available_tuple),
+        template_slots=list(template_slots_tuple),
+        boxing_mode=boxing_mode,
+        start=start,
+        must_include=set(must_tuple),
+        exclude=set(exclude_tuple),
+        require_ports=require_ports,
+        require_run_speed=require_run_speed,
+        require_charm=require_charm,
+        require_pet_heavy=require_pet_heavy,
+        require_kiting=False,
+        hardcore_required=hardcore_required,
+        limit=15,
+        return_explain=True,
+    )
+
 
 present_eras = set(ratings.keys()) | set(defaults.keys())
 era_options = [e for e in ERA_ORDER if e in present_eras]
@@ -562,7 +610,7 @@ with col_main:
             st.caption("Curated meta builds for this era and box size.")
             for rank, comp in meta_top5:
                 rank_show = _meta_rank_display.get(rank, str(rank))
-                build_line = _build_line_with_icons(comp, f'<span class="rec-medal rec-meta-rank">{rank_show}</span>')
+                build_line = _build_line(comp, f'<span class="rec-medal rec-meta-rank">{rank_show}</span>')
                 card_html = f"""
             <div class="rec-card">
                 <div class="rec-build-line">{build_line}</div>
@@ -572,23 +620,20 @@ with col_main:
         else:
             st.warning("No meta builds for this era/box size.")
     else:
-        scored = generate_scored_recommendations(
-            ratings=ratings,
-            era=era,
-            available=available,
-            template_slots=template_slots,
-            boxing_mode=st.session_state["boxing_mode"],
-            start=st.session_state["start"],
-            must_include=must_set,
-            exclude=exclude_set,
-            require_ports=st.session_state["require_ports"],
-            require_run_speed=st.session_state["require_run_speed"],
-            require_charm=require_charm_effective,
-            require_pet_heavy=st.session_state["require_pet_heavy"],
-            require_kiting=False,
-            hardcore_required=hardcore_required,
-            limit=15,
-            return_explain=True,
+        scored = _cached_recommendations(
+            str(DATA_DIR),
+            era,
+            tuple(sorted(available)),
+            tuple(template_slots),
+            st.session_state["boxing_mode"],
+            st.session_state["start"],
+            tuple(sorted(must_set)),
+            tuple(sorted(exclude_set)),
+            st.session_state["require_ports"],
+            st.session_state["require_run_speed"],
+            require_charm_effective,
+            st.session_state["require_pet_heavy"],
+            hardcore_required,
         )
 
     if not st.session_state["use_meta_builds"] and scored:
@@ -619,7 +664,7 @@ with col_main:
                 medal_html = f'<span class="rec-medal">{_medals[rank_one_index]}</span>'
             else:
                 medal_html = f'<span class="rec-rank">#{rank_one_index}</span>'
-            build_line = _build_line_with_icons(comp, medal_html)
+            build_line = _build_line_with_icons(comp, medal_html) if is_first else _build_line(comp, medal_html)
             bar_html = f"""
         <div class="{card_class}">
             <div class="rec-build-line">{build_line}</div>

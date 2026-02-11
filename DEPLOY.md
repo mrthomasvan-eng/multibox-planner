@@ -17,7 +17,28 @@
 4. **Deploy**  
    Streamlit will install from `requirements.txt` and run `streamlit run app.py`. The first run may take a minute; after that it’s usually faster. Updates: push to the same branch and the app will redeploy.
 
-**Note:** Community Cloud apps spin down when idle. The first click after a while can take 30–60 seconds (cold start); after that, interactions use the same caching we added and feel snappier.
+**Note:** Community Cloud apps spin down when idle. The first click after a while can take 30–60 seconds (cold start); after that, interactions use caching and feel snappier.
+
+---
+
+## How to edit the app and get changes online
+
+Your app is already at **https://multibox-planner.streamlit.app/** and is tied to your GitHub repo. To change the app and have the live site update:
+
+1. **Edit the code on your computer**  
+   Open the project in Cursor (or any editor) and change `app.py`, files in `app/`, `data/`, or `assets/` as needed.
+
+2. **Push the changes to GitHub**  
+   - **If you used “upload files”** and don’t have Git installed:  
+     On GitHub, open your repo → go to the file you changed (e.g. `app.py`) → click the pencil icon (Edit) → paste in your new version → scroll down → **Commit changes**.  
+     For multiple files, repeat or drag-and-drop updated files into the repo (same as the first upload).  
+   - **If you use Git** (e.g. GitHub Desktop or command line):  
+     Commit your changes, then push to the `main` branch.
+
+3. **Redeploy**  
+   Streamlit Cloud watches your repo. After you commit and push (or save edits on GitHub), it will redeploy automatically. Go to [share.streamlit.io](https://share.streamlit.io), open your app, and check the “Source” / “Rerun” if you want to force a refresh. Usually within a minute the live app at https://multibox-planner.streamlit.app/ will show your updates.
+
+**Tip:** If you start editing a lot, installing [GitHub Desktop](https://desktop.github.com/) makes “commit + push” a few clicks instead of re-uploading files by hand.
 
 ---
 
@@ -33,8 +54,8 @@
 
 ## 3. Speed when it’s “online”
 
-- **Cold start:** First load or after idle can be slower; that’s normal for free/cheap hosting.
-- **After load:** Asset and data loading are cached, so changing constraints only recomputes recommendations and redraws the UI. If it still feels slow, the next lever is to cache or simplify the recommender for repeated inputs (e.g. same era/box size).
+- **Cold start:** First load or after idle can be slower; that’s normal for free hosting.
+- **After load:** Data, assets, and recommendation results are cached. The first time you pick a given combination (era, box size, rules, etc.) it may take a moment; if you pick the same again (or switch back), results show up much faster.
 
 The banner above recommendations links to:  
 `https://www.redguides.com/amember/aff/go/vanman2099`  
