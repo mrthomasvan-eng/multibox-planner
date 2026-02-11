@@ -1,0 +1,17 @@
+{
+    "standard": {
+      "label": "Standard (Normal Era Class Availability)",
+      "add_classes_by_era": {},
+      "remove_classes_by_era": {},
+      "weight_modifiers": {}
+    },
+    "frostreaver": {
+      "label": "Frostreaver (BL + Berserker at Classic Launch)",
+      "add_classes_by_era": {
+        "ckv": ["Beastlord", "Berserker"]
+      },
+      "remove_classes_by_era": {},
+      "weight_modifiers": {}
+    }
+  }
+  
